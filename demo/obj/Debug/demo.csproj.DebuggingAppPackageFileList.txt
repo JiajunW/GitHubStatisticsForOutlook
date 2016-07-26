@@ -1,0 +1,2 @@
+bin\Debug\OfficeAppManifests\demoManifest.xml
+D:\code\OutlookWebAddIn\demo\bin\Debug\demo.debugapp
