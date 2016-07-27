@@ -53,6 +53,37 @@ $(function () {
             window.myChart = myChart;
 
             item.body.setSelectedDataAsync('<h2>Hello</h2>', { coercionType: Office.CoercionType.Html }, function () { });
+
+            Office.context.mailbox.item.addFileAttachmentAsync(
+                "http://smartbuildings.unh.edu/wp-content/uploads/2015/06/Winter-Tiger-Wild-Cat-Images-1024x576.jpg",
+                "Winter-Tiger-Wild-Cat-Images-1024x576.jpg",
+                { asyncContext: null },
+                function (asyncResult) {
+                    if (asyncResult.status == "failed") {
+                        //showMessage("Action failed with error: " + asyncResult.error.message);
+                    }
+                    else {
+                        Office.context.mailbox.item.body.setSelectedDataAsync(
+                            "<img src='cid:Winter-Tiger-Wild-Cat-Images-1024x576.jpg'>",
+                            {
+                                coercionType: Office.CoercionType.Html,
+                                asyncContext: { var3: 1, var4: 2 }
+                            },
+                            function (asyncResult) {
+                                if (asyncResult.status ==
+                                    Office.AsyncResultStatus.Failed) {
+                                    showMessage(asyncResult.error.message);
+                                }
+                                else {
+                                    // Successfully set data in item body.
+                                    // Do whatever appropriate for your scenario,
+                                    // using the arguments var3 and var4 as applicable.
+                                }
+                            }
+                        );
+                    }
+                }
+            );
         });
     });
 
