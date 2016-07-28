@@ -5,6 +5,11 @@ import requests
 import json
 import cStringIO
 
+from web.wsgiserver import CherryPyWSGIServer 
+
+CherryPyWSGIServer.ssl_certificate = "C:\Users\Administrator\Documents\RESTful\server.crt" 
+CherryPyWSGIServer.ssl_private_key = "C:\Users\Administrator\Documents\RESTful\server.key"
+
 paths = (
   '/api/(.+)/(.+)/(.+)', 'GithubData'
 )
@@ -14,11 +19,19 @@ app = web.application(paths, globals())
 
 class GithubData:
 	def GET(self, first, second, thrid):
+		web.header('Access-Control-Allow-Origin', '*')
+		web.header('Access-Control-Allow-Credentials', 'true')
+		web.header('Content-Type', 'application/json')
 		full_name =  first + '/' + second
 		dataType = thrid.replace('-', '/')
 		headers = {}
-		r = requests.get('https://api.github.com/repos/' + full_name + '/' + dataType, headers= headers)
-		myobj = r.json()
+
+		while True:
+			r = requests.get('https://api.github.com/repos/' + full_name + '/' + dataType, headers= headers)
+			myobj = r.json()
+			if len(myobj) != 0:
+				break
+
 		
 		p = Parser()
 		return p.fmap[thrid](myobj)
@@ -28,7 +41,7 @@ class Parser:
 		self.fmap = {
 			"stats-commit_activity" : self.commit_activity,
 			"forks" : self.forks,
-			"downloads" : self.downloads,
+			"releases" : self.downloads,
 			"issues" : self.issues
 		}
 
@@ -44,37 +57,23 @@ class Parser:
 		return json.dumps(js)
 
 	def forks(self, jsObj):
-		InternalUserList=[
-        'https://api.github.com/repos/VivianTian/WindowsProtocolTestSuites', 
-        'https://api.github.com/repos/caoyihua/WindowsProtocolTestSuites',
-        'https://api.github.com/repos/chenlu0616/WindowsProtocolTestSuites',
-        'https://api.github.com/repos/yihuac/WindowsProtocolTestSuites',
-        'https://api.github.com/repos/JessieF/WindowsProtocolTestSuites',
-        'https://api.github.com/repos/Dingshouqing/WindowsProtocolTestSuites',
-        'https://api.github.com/repos/yazeng/WindowsProtocolTestSuites',
-        'https://api.github.com/repos/XiaotianLiuMS/WindowsProtocolTestSuites',
-        'https://api.github.com/repos/dongruiqing/WindowsProtocolTestSuites',
-        'https://api.github.com/repos/VictorDingSQ/WindowsProtocolTestSuites',
-        'https://api.github.com/repos/LiuXiaotian/WindowsProtocolTestSuites',
-        ]
-        internal_forks_total_count = 0
-        external_forks_total_count = 0
+		js = {}
+		js['forks'] = 0
+
 		for p in jsObj:
 			if "id" in p:
-				if p['url'] in InternalUserList:			
-					internal_forks_total_count += 1
-				else:
-					external_forks_total_count += 1
-		    else:
-				print "No Data"
-		js = {}
-		js['internal'] = internal_forks_total_count
-		js['external'] = external_forks_total_count
+				js['forks'] += 1
 		return json.dumps(js)
 
 	def downloads(self, jsObj):
-		pass
+		js = {}
+		js['download']= 0
 
+		for p in jsObj:
+			if "assets" in p:
+				for asset in p['assets']:
+					js['download'] += asset['download_count']
+		return json.dumps(js)
 
 
 if __name__ == "__main__":
